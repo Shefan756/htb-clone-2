@@ -1,73 +1,94 @@
-# Welcome to your Lovable project
+# CyberLearn - Docker Bridge Web Application
 
-## Project info
+A React-based web application that integrates with a Docker bridge server to spawn and manage Parrot OS containers for cybersecurity learning.
 
-**URL**: https://lovable.dev/projects/146f4c73-e4fe-426b-b749-361660ef7b6c
+## Prerequisites
 
-## How can I edit this code?
+- **Docker Desktop** (Windows/Mac) or **Docker Engine** (Linux)
+- **Node.js** (v14 or higher)
+- **npm** or **yarn**
 
-There are several ways of editing your application.
+## Quick Start
 
-**Use Lovable**
+### Step 1: Install Dependencies
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/146f4c73-e4fe-426b-b749-361660ef7b6c) and start prompting.
+```bash
+npm install
+```
 
-Changes made via Lovable will be committed automatically to this repo.
+### Step 2: Set Up Docker Image
 
-**Use your preferred IDE**
+Build or pull the Parrot OS Docker image:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```bash
+# Build from Dockerfile
+docker build -t parrotsec/security:latest -f Dockerfile .
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+# Or pull from Docker Hub
+docker pull parrotsec/security:latest
+```
 
-Follow these steps:
+### Step 3: Start the Docker Bridge Server
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Open a terminal and navigate to the `docker-bridge` directory:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+```bash
+cd docker-bridge
+npm install
+npm start
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+You should see the server running on `http://localhost:3001`.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+**Keep this terminal open** - the bridge server needs to run while using the app.
+
+### Step 4: Start the React Application
+
+In a **new terminal window**, from the project root:
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will open at `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Usage
 
-**Use GitHub Codespaces**
+1. Open the app at `http://localhost:8080`
+2. Navigate to the **Dashboard** page
+3. Click **"Spawn Environment"** to start a Parrot OS container
+4. Use the terminal interface to interact with the container
+5. Use controls to reset, terminate, or manage the container
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Troubleshooting
 
-## What technologies are used for this project?
+### Common Issues
 
-This project is built with:
+- **"Cannot connect to Docker daemon"**: Ensure Docker Desktop/Engine is running
+- **Bridge server connection errors**: Verify the bridge server is running on port 3001
+- **Container spawn failures**: Check Docker logs and ensure the image is built correctly
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+For more detailed troubleshooting, see [DOCKER_SETUP.md](./DOCKER_SETUP.md).
 
-## How can I deploy this project?
+## Technologies Used
 
-Simply open [Lovable](https://lovable.dev/projects/146f4c73-e4fe-426b-b749-361660ef7b6c) and click on Share -> Publish.
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, shadcn/ui
+- **Backend**: Node.js, Express, Socket.io, Dockerode
+- **Container**: Parrot OS (Security Edition)
 
-## Can I connect a custom domain to my Lovable project?
+## Project Structure
 
-Yes, you can!
+```
+├── src/                 # React frontend source
+├── docker-bridge/       # Node.js bridge server
+├── Dockerfile          # Parrot OS container definition
+└── DOCKER_SETUP.md     # Detailed setup guide
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Development
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- Frontend runs on `http://localhost:8080`
+- Bridge server runs on `http://localhost:3001`
+- Both must be running simultaneously for full functionality
+
+For detailed development workflow and container management, refer to [DOCKER_SETUP.md](./DOCKER_SETUP.md).
