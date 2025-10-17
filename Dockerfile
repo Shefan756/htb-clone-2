@@ -7,18 +7,33 @@ ENV DEBIAN_FRONTEND=noninteractive \
     USER=attacker \
     PASS=attacker
 
-# Update and install desktop, VNC, noVNC, SSH, supervisor
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends \
-      xfce4 xfce4-terminal dbus-x11 x11-xserver-utils \
-      x11vnc xvfb novnc websockify supervisor \
-      openssh-server sudo curl wget git net-tools iproute2 iputils-ping \
-      nmap metasploit-framework sqlmap john hashcat \
-      && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Update and upgrade first
+RUN apt-get update && apt-get upgrade -y
 
-# Create attacker user
+# GUI stack
+RUN apt-get install -y \
+    xfce4 xfce4-terminal dbus-x11 x11-xserver-utils \
+    x11vnc xvfb novnc websockify supervisor xdotool
+
+# Parrot branding and tools
+RUN apt-get install -y \
+    parrot-interface parrot-menu parrot-tools-full
+
+# Security tools
+RUN apt-get install -y \
+    openssh-server sudo curl wget git net-tools iproute2 iputils-ping \
+    nmap metasploit-framework sqlmap john hashcat
+
+# Clean up apt cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Remove noisy autostart apps
+RUN rm -f /etc/xdg/autostart/{blueman,light-locker,nm-applet,polkit-gnome-authentication-agent-1}.desktop
+
+# Create attacker user and preload XFCE config
 RUN useradd -m -s /bin/bash "$USER" && echo "$USER:$PASS" | chpasswd && \
-    adduser "$USER" sudo && echo "$USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    adduser "$USER" sudo && echo "$USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    cp -r /etc/skel/.config /home/$USER/ && chown -R $USER:$USER /home/$USER/.config
 
 # Configure SSH
 RUN mkdir -p /var/run/sshd && \
@@ -28,9 +43,8 @@ RUN mkdir -p /var/run/sshd && \
 # Copy supervisor config
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Expose noVNC (websocket proxy) and SSH
+# Expose noVNC and SSH
 EXPOSE 8081 22
 
 ENTRYPOINT []
-# Start everything under supervisor
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
