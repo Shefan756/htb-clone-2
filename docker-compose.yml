@@ -1,0 +1,19 @@
+services:
+  bridge:
+    image: node:18
+    working_dir: /app
+    volumes:
+      - ./docker-bridge:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["node", "server.js"]
+    ports:
+      - "3000:3000"
+
+  parrot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+    ports:
+      - "8081:8081"   # noVNC GUI
+      - "2222:22"     # SSH

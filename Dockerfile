@@ -1,37 +1,36 @@
-# Dockerfile for Parrot OS Security Environment
 FROM parrotsec/security:latest
 
-# Set working directory
-WORKDIR /root
+ENV DEBIAN_FRONTEND=noninteractive \
+    DISPLAY=:1 \
+    VNC_RESOLUTION=1280x800 \
+    VNC_DEPTH=24 \
+    USER=attacker \
+    PASS=attacker
 
-# Update and install additional tools
-RUN apt-get update && apt-get install -y \
-    nmap \
-    metasploit-framework \
-    burpsuite \
-    wireshark \
-    john \
-    hashcat \
-    aircrack-ng \
-    sqlmap \
-    nikto \
-    hydra \
-    net-tools \
-    iputils-ping \
-    curl \
-    wget \
-    vim \
-    git \
-    python3 \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
+# Update and install desktop, VNC, noVNC, SSH, supervisor
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+      xfce4 xfce4-terminal dbus-x11 x11-xserver-utils \
+      x11vnc xvfb novnc websockify supervisor \
+      openssh-server sudo curl wget git net-tools iproute2 iputils-ping \
+      nmap metasploit-framework sqlmap john hashcat \
+      && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TERM=xterm-256color
+# Create attacker user
+RUN useradd -m -s /bin/bash "$USER" && echo "$USER:$PASS" | chpasswd && \
+    adduser "$USER" sudo && echo "$USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Expose common ports
-EXPOSE 22 80 443 4444 8080
+# Configure SSH
+RUN mkdir -p /var/run/sshd && \
+    sed -ri 's/^#?PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -ri 's/^#?PermitRootLogin .*/PermitRootLogin no/' /etc/ssh/sshd_config
 
-# Keep container running
-CMD ["/bin/bash"]
+# Copy supervisor config
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Expose noVNC (websocket proxy) and SSH
+EXPOSE 8081 22
+
+ENTRYPOINT []
+# Start everything under supervisor
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

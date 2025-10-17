@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Terminal as TerminalIcon, Power, RefreshCw, Maximize2, Minimize2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Terminal } from './Terminal';
 
 interface PwnBoxProps {
   challengeId: string;
@@ -23,24 +22,16 @@ export function PwnBox({ challengeId }: PwnBoxProps) {
 
   const handleSpawn = async () => {
     setIsLoading(true);
-    
     try {
-      // Call local Docker API bridge
       const response = await fetch('http://localhost:3001/api/docker/spawn', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           challengeId,
           image: 'parrotsec/security:latest'
         }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to spawn container');
-      }
-
+      if (!response.ok) throw new Error('Failed to spawn container');
       const data = await response.json();
       setContainerInfo({
         containerId: data.containerId,
@@ -59,19 +50,13 @@ export function PwnBox({ challengeId }: PwnBoxProps) {
 
   const handleTerminate = async () => {
     if (!containerInfo) return;
-    
     setIsLoading(true);
     try {
       await fetch('http://localhost:3001/api/docker/terminate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          containerId: containerInfo.containerId
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ containerId: containerInfo.containerId }),
       });
-      
       setIsActive(false);
       setContainerInfo(null);
       toast.success('Environment terminated successfully!');
@@ -85,17 +70,12 @@ export function PwnBox({ challengeId }: PwnBoxProps) {
 
   const handleReset = async () => {
     if (!containerInfo) return;
-    
     setIsLoading(true);
     try {
       await fetch('http://localhost:3001/api/docker/reset', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          containerId: containerInfo.containerId
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ containerId: containerInfo.containerId }),
       });
       toast.success('Environment reset successfully!');
     } catch (error) {
@@ -108,38 +88,30 @@ export function PwnBox({ challengeId }: PwnBoxProps) {
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
-
     if (!isFullscreen) {
-      if (containerRef.current.requestFullscreen) {
-        containerRef.current.requestFullscreen();
-      }
+      containerRef.current.requestFullscreen?.();
       setIsFullscreen(true);
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
+      document.exitFullscreen?.();
       setIsFullscreen(false);
     }
   };
 
-  const handleDisconnect = () => {
-    toast.warning('Container connection lost');
-  };
-
-  // Handle fullscreen change events (e.g., when user presses ESC)
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
-
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
   return (
-    <div ref={containerRef} className={`bg-gray-900 border border-gray-800 rounded-lg p-6 ${isFullscreen ? 'fixed inset-0 z-50 flex flex-col' : ''}`}>
+    <div
+      ref={containerRef}
+      className={`bg-gray-900 border border-gray-800 rounded-lg p-6 ${
+        isFullscreen ? 'fixed inset-0 z-50 flex flex-col' : ''
+      }`}
+    >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <TerminalIcon className="w-6 h-6 text-red-500" />
@@ -148,14 +120,12 @@ export function PwnBox({ challengeId }: PwnBoxProps) {
             <p className="text-gray-400 text-sm">Linux Penetration Testing Distribution</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {isActive && (
-            <span className="flex items-center gap-2 text-green-500 text-sm">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              Active
-            </span>
-          )}
-        </div>
+        {isActive && (
+          <span className="flex items-center gap-2 text-green-500 text-sm">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            Active
+          </span>
+        )}
       </div>
 
       {!isActive ? (
@@ -189,19 +159,24 @@ export function PwnBox({ challengeId }: PwnBoxProps) {
         </div>
       ) : (
         <div className={isFullscreen ? 'flex-1 flex flex-col' : ''}>
-          <div className={`bg-black rounded-lg border border-gray-800 mb-4 overflow-hidden ${isFullscreen ? 'flex-1' : 'h-[400px]'}`}>
+          <div
+            className={`bg-black rounded-lg border border-gray-800 mb-4 overflow-hidden ${
+              isFullscreen ? 'flex-1' : 'h-[400px]'
+            }`}
+          >
             <div className="flex items-center gap-2 bg-gray-900 px-4 py-2 border-b border-gray-800">
               <div className="flex gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
                 <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
               </div>
-              <span className="text-gray-400 text-sm ml-2">root@parrot:~#</span>
+              <span className="text-gray-400 text-sm ml-2">Parrot Desktop</span>
             </div>
             <div className={`${isFullscreen ? 'h-[calc(100%-40px)]' : 'h-[calc(400px-40px)]'}`}>
-              <Terminal 
-                containerId={containerInfo?.containerId || ''}
-                onDisconnect={handleDisconnect}
+              <iframe
+                src="http://localhost:8081/vnc.html"
+                title="Parrot Desktop"
+                style={{ width: '100%', height: '100%', border: 'none', backgroundColor: '#000' }}
               />
             </div>
           </div>
@@ -246,7 +221,7 @@ export function PwnBox({ challengeId }: PwnBoxProps) {
               onClick={handleTerminate}
               disabled={isLoading}
               className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-            >
+                        >
               <Power className="w-4 h-4" />
               Terminate
             </button>
